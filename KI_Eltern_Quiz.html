@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI & mein Kind – Eltern-Check</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 680px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .header { text-align: center; margin-bottom: 32px; }
+  .emoji { font-size: 48px; margin-bottom: 12px; }
+  h1 { font-size: 26px; color: #1a1a2e; margin-bottom: 8px; }
+  .subtitle { color: #666; font-size: 15px; line-height: 1.5; }
+
+  .progress-bar-wrap { background: #f0f0f0; border-radius: 99px; height: 8px; margin-bottom: 28px; }
+  .progress-bar { background: linear-gradient(90deg, #667eea, #764ba2); height: 8px; border-radius: 99px; transition: width 0.4s ease; }
+  .progress-label { text-align: right; font-size: 13px; color: #999; margin-bottom: 6px; }
+
+  .question-block { display: none; }
+  .question-block.active { display: block; }
+  .question-text { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; line-height: 1.4; }
+
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option {
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #333;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .option:hover { border-color: #667eea; background: #f5f3ff; }
+  .option.selected { border-color: #667eea; background: #f0edff; color: #4c3fa0; font-weight: 600; }
+  .option-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .option.selected .option-dot { border-color: #667eea; background: #667eea; }
+  .option.selected .option-dot::after { content: '✓'; color: white; font-size: 11px; font-weight: bold; }
+
+  .nav { display: flex; justify-content: space-between; margin-top: 28px; gap: 12px; }
+  .btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back { background: #f0f0f0; color: #666; }
+  .btn-back:hover { background: #e0e0e0; }
+  .btn-next { background: linear-gradient(135deg, #667eea, #764ba2); color: white; margin-left: auto; }
+  .btn-next:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Result */
+  .result { display: none; text-align: center; }
+  .result.active { display: block; }
+  .score-circle {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 36px; font-weight: 800;
+    color: white;
+  }
+  .score-label { font-size: 13px; font-weight: 400; opacity: 0.9; }
+  .result-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .result-desc { color: #555; font-size: 15px; line-height: 1.6; margin-bottom: 28px; }
+
+  .tips { text-align: left; background: #f8f7ff; border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+  .tips h3 { font-size: 16px; color: #4c3fa0; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .tip-item { display: flex; gap: 10px; margin-bottom: 12px; font-size: 14px; color: #444; line-height: 1.5; }
+  .tip-icon { font-size: 18px; flex-shrink: 0; }
+
+  .section { text-align: left; background: #f8f7ff; border-radius: 14px; padding: 24px; margin-bottom: 18px; }
+  .section h3 { font-size: 16px; color: #4c3fa0; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  .answer-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 13px; gap: 10px; }
+  .answer-row:last-child { border-bottom: none; }
+  .answer-q { color: #555; flex: 1; }
+  .answer-pts { font-weight: 700; border-radius: 99px; padding: 3px 10px; font-size: 12px; flex-shrink: 0; }
+  .pts-3 { background: #e8f5e9; color: #2e7d32; }
+  .pts-2 { background: #fff8e1; color: #f57f17; }
+  .pts-1 { background: #fce4ec; color: #c62828; }
+  .pts-0 { background: #ffebee; color: #b71c1c; }
+
+  .fact-box { background: #fff8e1; border-left: 4px solid #ffc107; border-radius: 0 10px 10px 0; padding: 14px 16px; margin-bottom: 12px; font-size: 14px; color: #444; line-height: 1.6; }
+  .fact-box strong { color: #e65100; }
+
+  .qa-item { margin-bottom: 16px; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q { font-size: 14px; font-weight: 700; color: #4c3fa0; margin-bottom: 6px; }
+  .qa-a { font-size: 14px; color: #444; line-height: 1.6; }
+
+  .btn-restart { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 14px 36px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .btn-restart:hover { opacity: 0.9; }
+
+  .start-screen { text-align: center; }
+  .start-screen .btn-next { padding: 14px 40px; font-size: 16px; margin: 0 auto; display: block; }
+  .info-chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+  .chip { background: #f0edff; color: #4c3fa0; border-radius: 99px; padding: 6px 14px; font-size: 13px; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- START -->
+  <div id="start" class="start-screen">
+    <div class="header">
+      <div class="emoji">🤖</div>
+      <h1>KI & mein Kind – wie gut kennst du dich aus?</h1>
+      <p class="subtitle">Dieser kurze Test hilft dir herauszufinden, wie sicher du im Umgang mit Künstlicher Intelligenz und digitalen Medien bist – und gibt dir konkrete Tipps für zuhause.</p>
+    </div>
+    <div class="info-chips">
+      <span class="chip">⏱ ca. 3 Minuten</span>
+      <span class="chip">10 Fragen</span>
+      <span class="chip">Persönliche Auswertung</span>
+    </div>
+    <button class="btn btn-next" onclick="startQuiz()">Jetzt starten →</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" style="display:none">
+    <div class="progress-label" id="progress-label">Frage 1 von 10</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar" style="width:10%"></div></div>
+    <div id="questions"></div>
+    <div class="nav">
+      <button class="btn btn-back" id="btn-back" onclick="prevQ()" style="display:none">← Zurück</button>
+      <button class="btn btn-next" id="btn-next" onclick="nextQ()" disabled>Weiter →</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" class="result">
+    <div class="score-circle" id="score-circle">
+      <span id="score-num"></span>
+      <span class="score-label">Punkte</span>
+    </div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-desc" id="result-desc"></div>
+
+    <div class="section">
+      <h3>📋 Deine Antworten im Überblick</h3>
+      <div id="answer-overview"></div>
+    </div>
+
+    <div class="tips" id="tips-box"></div>
+
+    <div class="section">
+      <h3>📊 Wusstest du das? – Fakten zu KI & Kinder</h3>
+      <div class="fact-box"><strong>95%</strong> der Jugendlichen zwischen 12–19 Jahren nutzen täglich das Internet – viele davon auch KI-Tools wie ChatGPT.</div>
+      <div class="fact-box"><strong>Pseudoautismus:</strong> Experten warnen vor einem neuen Phänomen – Kinder, die zu viel Zeit mit Bildschirmen verbringen, entwickeln soziale Rückzugstendenzen, die autistischen Zügen ähneln.</div>
+      <div class="fact-box"><strong>Datenschutz:</strong> Viele KI-Apps speichern Gespräche und persönliche Daten. Kinder geben oft unbewusst sensible Informationen ein – Name, Schule, Wohnort.</div>
+      <div class="fact-box"><strong>Deepfakes & Phishing:</strong> KI kann heute Bilder, Videos und Stimmen so fälschen, dass sie echt wirken. Auch Betrugsnachrichten klingen dadurch viel überzeugender als früher.</div>
+    </div>
+
+    <div class="section">
+      <h3>❓ Häufige Fragen von Eltern</h3>
+      <div class="qa-item">
+        <div class="qa-q">Ab welchem Alter darf mein Kind KI-Tools nutzen?</div>
+        <div class="qa-a">Die meisten KI-Tools wie ChatGPT haben eine Altersgrenze von 13 Jahren. Darunter sollte die Nutzung nur unter Aufsicht stattfinden. Wichtiger als das Alter ist aber das gemeinsame Gespräch darüber.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Mein Kind nutzt KI für Hausübungen – ist das Schummeln?</div>
+        <div class="qa-a">Sprich offen mit deinem Kind darüber, wann KI als Lernhilfe okay ist (z. B. etwas erklären lassen) und wann nicht (z. B. die ganze Aufgabe erledigen lassen). Viele Schulen haben inzwischen eigene Regeln dazu.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Wie erkenne ich, ob ein Video oder eine Nachricht ein Deepfake oder Betrug ist?</div>
+        <div class="qa-a">Achte auf unnatürliche Bewegungen oder Stimmen, prüfe ob seriöse Nachrichtenquellen die Information bestätigen, und sei skeptisch bei Nachrichten die zu schnellem Handeln drängen (z. B. "Klicke sofort hier").</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Wie erkläre ich meinem Kind die Risiken von KI, ohne es zu ängstigen?</div>
+        <div class="qa-a">Zeige statt zu verbieten. Probiere KI gemeinsam aus, zeige wie eine falsche Antwort aussieht, und erkläre warum man Quellen immer prüfen sollte. Neugier schlägt Angst.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>✅ Dos & ❌ Don'ts für Eltern</h3>
+      <div class="tip-item"><span class="tip-icon">✅</span><span><strong>Gespräche führen</strong> – Frag dein Kind regelmäßig, welche Apps und Tools es nutzt. Zeige echtes Interesse.</span></div>
+      <div class="tip-item"><span class="tip-icon">✅</span><span><strong>Klare Regeln vereinbaren</strong> – z. B. kein Handy beim Essen, KI nur für bestimmte Zwecke.</span></div>
+      <div class="tip-item"><span class="tip-icon">✅</span><span><strong>Selbst informieren</strong> – Probiere ChatGPT einmal selbst aus. So weißt du, womit dein Kind arbeitet.</span></div>
+      <div class="tip-item"><span class="tip-icon">✅</span><span><strong>Kritisches Denken fördern</strong> – Übe mit deinem Kind, KI-Antworten und verdächtige Nachrichten zu hinterfragen.</span></div>
+      <div class="tip-item"><span class="tip-icon">❌</span><span><strong>Nicht einfach alles verbieten</strong> – Das führt oft dazu, dass Kinder KI heimlich nutzen, ohne Aufklärung.</span></div>
+      <div class="tip-item"><span class="tip-icon">❌</span><span><strong>Kinder nicht allein lassen</strong> – Besonders jüngere Kinder brauchen Begleitung beim Umgang mit KI-Tools.</span></div>
+      <div class="tip-item"><span class="tip-icon">❌</span><span><strong>Persönliche Daten nicht eingeben</strong> – Erkläre, dass Namen, Adressen oder Fotos niemals in KI-Apps eingegeben werden sollten.</span></div>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">🔄 Nochmal versuchen</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Weißt du, welche KI-Tools oder Apps dein Kind regelmäßig nutzt?",
+    options: ["Ja, ich kenne die meisten", "Einige kenne ich", "Nicht wirklich", "Nein, keine Ahnung"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Hast du schon mal mit deinem Kind über KI oder künstliche Intelligenz gesprochen?",
+    options: ["Ja, regelmäßig", "Ein- oder zweimal", "Kurz erwähnt", "Noch nie"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Weißt du, was ChatGPT ist und wie es funktioniert?",
+    options: ["Ja, ich kenne es gut", "Ich habe davon gehört", "Ich weiß es ungefähr", "Nein, kein Begriff"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Wie gehst du mit dem Thema Bildschirmzeit bei deinem Kind um?",
+    options: ["Wir haben klare Regeln", "Es gibt grobe Grenzen", "Ich versuche es zu begrenzen", "Es gibt keine Regelung"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Weißt du, welche Risiken entstehen, wenn dein Kind persönliche Daten in KI-Apps eingibt?",
+    options: ["Ja, ich bin gut informiert", "Ungefähr", "Ich habe eine Idee", "Nein, nicht wirklich"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Kann dein Kind unterscheiden, ob eine Information von einer KI korrekt ist oder nicht?",
+    options: ["Ja, wir üben das gemeinsam", "Ich glaube schon", "Eher nicht", "Das weiß ich nicht"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Hast du schon mal überprüft, welche Datenschutzeinstellungen in den Apps deines Kindes aktiv sind?",
+    options: ["Ja, regelmäßig", "Ab und zu", "Einmal kurz", "Noch nie"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Wie reagierst du, wenn dein Kind KI für Schulaufgaben (z. B. Hausübungen) benutzt?",
+    options: ["Wir besprechen, wann das okay ist", "Ich toleriere es", "Ich bin unsicher, was ich sagen soll", "Ich weiß nicht, dass es das tut"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Weißt du, was ein 'Deepfake' ist und wie man KI-gefälschte Videos oder Phishing-Nachrichten erkennen kann?",
+    options: ["Ja, ich kenne mich gut aus", "Ich habe schon davon gehört", "Ich habe eine ungefähre Idee", "Nein, kein Begriff"],
+    points: [3, 2, 1, 0]
+  },
+  {
+    q: "Fühlst du dich generell gut gerüstet, um mit deinem Kind über KI und digitale Medien zu sprechen?",
+    options: ["Ja, sehr gut", "Meistens ja", "Eher unsicher", "Nein, ich bin überfordert"],
+    points: [3, 2, 1, 0]
+  }
+];
+
+let current = 0;
+let answers = new Array(questions.length).fill(null);
+
+function startQuiz() {
+  document.getElementById('start').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const container = document.getElementById('questions');
+  container.innerHTML = '';
+  const q = questions[current];
+  const block = document.createElement('div');
+  block.className = 'question-block active';
+  block.innerHTML = `<div class="question-text">${q.q}</div><div class="options">${q.options.map((o, i) => `
+    <div class="option ${answers[current] === i ? 'selected' : ''}" onclick="selectOption(${i})">
+      <div class="option-dot">${answers[current] === i ? '✓' : ''}</div>
+      ${o}
+    </div>`).join('')}</div>`;
+  container.appendChild(block);
+
+  document.getElementById('progress-label').textContent = `Frage ${current+1} von ${questions.length}`;
+  document.getElementById('progress-bar').style.width = `${((current+1)/questions.length)*100}%`;
+  document.getElementById('btn-back').style.display = current > 0 ? 'block' : 'none';
+  document.getElementById('btn-next').textContent = current === questions.length-1 ? 'Auswertung →' : 'Weiter →';
+  document.getElementById('btn-next').disabled = answers[current] === null;
+}
+
+function selectOption(i) {
+  answers[current] = i;
+  renderQuestion();
+}
+
+function nextQ() {
+  if (current < questions.length - 1) { current++; renderQuestion(); }
+  else showResult();
+}
+
+function prevQ() {
+  if (current > 0) { current--; renderQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quiz').style.display = 'none';
+  const result = document.getElementById('result');
+  result.classList.add('active');
+
+  const total = answers.reduce((sum, a, i) => sum + (a !== null ? questions[i].points[a] : 0), 0);
+  const max = questions.length * 3;
+  const pct = Math.round((total/max)*100);
+
+  const circle = document.getElementById('score-circle');
+  document.getElementById('score-num').textContent = total + '/' + max;
+
+  let title, desc, color, tips;
+
+  if (pct >= 75) {
+    color = 'linear-gradient(135deg, #11998e, #38ef7d)';
+    title = '🌟 Super! Du bist gut informiert.';
+    desc = 'Du kennst dich bereits sehr gut mit KI und digitalen Medien aus. Dein Kind hat eine starke Begleitung zuhause. Hier sind ein paar Tipps, um noch besser zu werden:';
+    tips = [
+      ['💬', 'Sprich regelmäßig mit deinem Kind über neue KI-Tools – die Welt verändert sich schnell.'],
+      ['🔍', 'Schau dir gemeinsam mit deinem Kind KI-generierte Inhalte an und besprecht, was stimmen könnte und was nicht.'],
+      ['📋', 'Überprüfe alle paar Monate die Datenschutzeinstellungen der genutzten Apps.'],
+      ['🤝', 'Teile dein Wissen mit anderen Eltern – zum Beispiel beim nächsten Elternabend!']
+    ];
+  } else if (pct >= 45) {
+    color = 'linear-gradient(135deg, #f7971e, #ffd200)';
+    title = '👍 Gut unterwegs – aber noch Luft nach oben!';
+    desc = 'Du hast schon ein gutes Grundverständnis, aber es gibt noch einige Bereiche, wo du und dein Kind von mehr Wissen profitieren würdet.';
+    tips = [
+      ['📱', 'Frage dein Kind heute, welche Apps es am meisten nutzt – das schafft Gesprächsstoff.'],
+      ['⏰', 'Vereinbart gemeinsam klare Regeln für die Bildschirmzeit – z. B. kein Handy beim Essen.'],
+      ['🔐', 'Schau dir gemeinsam die Datenschutzeinstellungen der Apps an und erkläre, warum das wichtig ist.'],
+      ['📚', 'Informiere dich kurz über ChatGPT und andere KI-Tools, damit du weißt, womit dein Kind eventuell arbeitet.']
+    ];
+  } else {
+    color = 'linear-gradient(135deg, #ee0979, #ff6a00)';
+    title = '💡 Hier besteht Aufholbedarf – aber du bist nicht allein!';
+    desc = 'Viele Eltern fühlen sich beim Thema KI und digitale Medien überfordert. Das ist völlig normal! Mit ein paar einfachen Schritten kannst du dein Kind viel besser begleiten.';
+    tips = [
+      ['💬', 'Starte heute ein Gespräch: „Welche Apps nutzt du am meisten?" – zeigt Interesse ohne Kontrolle.'],
+      ['🚫', 'Verbote allein helfen nicht. Besser: Erkläre die Risiken und biete Alternativen an.'],
+      ['📱', 'Probiere ChatGPT selbst einmal aus – so weißt du, womit dein Kind möglicherweise arbeitet.'],
+      ['🏫', 'Nutze Angebote an der Schule – Elternabende zu digitalen Themen sind sehr wertvoll.'],
+      ['❤️', 'Denke daran: Das Ziel ist nicht Kontrolle, sondern Vertrauen und offene Kommunikation.']
+    ];
+  }
+
+  circle.style.background = color;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-desc').textContent = desc;
+  document.getElementById('tips-box').innerHTML = `<h3>💡 Deine persönlichen Tipps</h3>${tips.map(t => `<div class="tip-item"><span class="tip-icon">${t[0]}</span><span>${t[1]}</span></div>`).join('')}`;
+
+  document.getElementById('answer-overview').innerHTML = questions.map((q, i) => {
+    const pts = answers[i] !== null ? q.points[answers[i]] : 0;
+    const cls = `pts-${pts}`;
+    const shortQ = q.q.length > 55 ? q.q.substring(0,55)+'…' : q.q;
+    return `<div class="answer-row"><span class="answer-q">${shortQ}</span><span class="answer-pts ${cls}">${pts}/3</span></div>`;
+  }).join('');
+}
+
+function restart() {
+  current = 0;
+  answers = new Array(questions.length).fill(null);
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+}
+</script>
+</body>
+</html>

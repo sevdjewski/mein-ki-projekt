@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI Challenge</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f0f1a; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.screen { display: none; max-width: 680px; width: 100%; }
+.screen.active { display: block; }
+
+/* START */
+.start-bg { text-align: center; }
+.logo { font-size: 64px; margin-bottom: 8px; }
+.game-title { font-size: 36px; font-weight: 900; background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+.game-sub { color: #a0a0b0; font-size: 15px; margin-bottom: 28px; line-height: 1.5; }
+.badge-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+.badge { background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); border-radius: 99px; padding: 6px 14px; font-size: 13px; color: #a78bfa; }
+.btn-play { background: linear-gradient(135deg, #a78bfa, #60a5fa); border: none; border-radius: 14px; padding: 16px 48px; font-size: 18px; font-weight: 800; color: white; cursor: pointer; letter-spacing: 0.5px; transition: transform 0.15s, opacity 0.15s; }
+.btn-play:hover { transform: scale(1.04); opacity: 0.95; }
+
+/* GAME */
+.game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.score-box { background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); border-radius: 10px; padding: 8px 16px; font-size: 14px; font-weight: 700; color: #a78bfa; }
+.lives { font-size: 22px; letter-spacing: 2px; }
+.timer-wrap { background: rgba(255,255,255,0.08); border-radius: 99px; height: 6px; margin-bottom: 20px; }
+.timer-fill { height: 6px; border-radius: 99px; background: linear-gradient(90deg, #34d399, #60a5fa); transition: width 0.1s linear; }
+.round-badge { display: inline-block; background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.3); border-radius: 8px; padding: 4px 12px; font-size: 12px; color: #60a5fa; font-weight: 700; margin-bottom: 12px; }
+.category-tag { display: inline-block; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; margin-bottom: 14px; }
+.q-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+.q-emoji { font-size: 36px; margin-bottom: 10px; }
+.q-text { font-size: 18px; font-weight: 700; line-height: 1.4; color: #f0f0ff; }
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt { background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 12px; cursor: pointer; font-size: 14px; color: #d0d0e0; font-weight: 600; text-align: center; transition: all 0.15s; line-height: 1.3; }
+.opt:hover { border-color: #a78bfa; background: rgba(167,139,250,0.12); color: white; }
+.opt.correct { border-color: #34d399; background: rgba(52,211,153,0.15); color: #34d399; }
+.opt.wrong { border-color: #f87171; background: rgba(248,113,113,0.15); color: #f87171; }
+.opt.reveal { border-color: #34d399; background: rgba(52,211,153,0.1); color: #34d399; }
+.opt.disabled { cursor: default; }
+.feedback { display: none; margin-top: 16px; border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.6; }
+.feedback.show { display: block; }
+.feedback.ok { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); color: #6ee7b7; }
+.feedback.nope { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: #fca5a5; }
+.fb-title { font-weight: 800; font-size: 15px; margin-bottom-4px; }
+.btn-next { background: linear-gradient(135deg, #a78bfa, #60a5fa); border: none; border-radius: 12px; padding: 13px 32px; font-size: 15px; font-weight: 800; color: white; cursor: pointer; display: none; margin-top: 16px; width: 100%; }
+.btn-next.show { display: block; }
+
+/* RESULT */
+.result-screen { text-align: center; }
+.result-emoji { font-size: 72px; margin-bottom: 12px; }
+.result-title { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+.result-score { font-size: 56px; font-weight: 900; margin: 16px 0; background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.result-desc { color: #a0a0b0; font-size: 15px; line-height: 1.6; margin-bottom: 24px; }
+.stats-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+.stat-box { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px 20px; min-width: 100px; }
+.stat-num { font-size: 28px; font-weight: 900; }
+.stat-lbl { font-size: 12px; color: #888; margin-top: 2px; }
+.fact-scroll { text-align: left; margin-bottom: 24px; }
+.fact-card { background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; font-size: 13px; color: #c4c4d4; line-height: 1.6; }
+.fact-card strong { color: #a78bfa; }
+.btn-restart { background: linear-gradient(135deg, #a78bfa, #60a5fa); border: none; border-radius: 14px; padding: 15px 40px; font-size: 16px; font-weight: 800; color: white; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- START -->
+<div class="screen active" id="startScreen">
+  <div class="start-bg">
+    <div class="logo">🤖</div>
+    <div class="game-title">KI CHALLENGE</div>
+    <p class="game-sub">Wie gut kennst du dich mit KI wirklich aus?<br>10 Fragen. Zeitlimit. Punkte. Kannst du alle beantworten?</p>
+    <div class="badge-row">
+      <span class="badge">⚡ 15 Sek. pro Frage</span>
+      <span class="badge">🏆 Punkte sammeln</span>
+      <span class="badge">💡 Infos nach jeder Frage</span>
+    </div>
+    <button class="btn-play" id="btnStart">STARTEN 🚀</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="gameScreen">
+  <div class="game-header">
+    <div class="score-box">⭐ <span id="scoreDisplay">0</span> Punkte</div>
+    <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+  </div>
+  <div class="timer-wrap"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+  <div class="round-badge" id="roundBadge">Frage 1 / 10</div>
+  <div class="category-tag" id="catTag"></div>
+  <div class="q-card">
+    <div class="q-emoji" id="qEmoji"></div>
+    <div class="q-text" id="qText"></div>
+  </div>
+  <div class="options" id="optionsGrid"></div>
+  <div class="feedback" id="feedback">
+    <div class="fb-title" id="fbTitle"></div>
+    <div id="fbText"></div>
+  </div>
+  <button class="btn-next" id="btnNext">Weiter ➜</button>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="resultScreen">
+  <div class="result-screen">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <div class="stats-row" id="statsRow"></div>
+    <div class="fact-scroll">
+      <div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:12px;">💡 Das solltest du wissen:</div>
+      <div class="fact-card"><strong>KI halluziniert:</strong> ChatGPT erfindet manchmal Fakten die plausibel klingen aber falsch sind. Immer Quellen checken!</div>
+      <div class="fact-card"><strong>Deine Daten:</strong> Alles was du in KI-Tools eintippst kann gespeichert werden. Niemals echten Namen, Adresse oder Fotos eingeben.</div>
+      <div class="fact-card"><strong>Schule und KI:</strong> KI als Erklaerhilfe ist okay – aber wenn die KI deine Hausaufgaben macht, lernst du nichts. Finde die Balance!</div>
+      <div class="fact-card"><strong>Deepfakes:</strong> KI kann heute Bilder und Videos faelschen die echt aussehen. Checke immer die Quelle bevor du etwas glaubst oder weiterschickst.</div>
+    </div>
+    <button class="btn-restart" id="btnRestart">🔄 Nochmal spielen</button>
+  </div>
+</div>
+
+<script>
+var questions = [
+  { cat:"Mythos-Check", col:"#f59e0b", emoji:"🤔", q:"Stimmt das? ChatGPT weiss immer die richtige Antwort.", opts:["Ja, es ist immer korrekt","Nein, KI kann sich irren","Nur bei einfachen Fragen","Abhaengig vom Thema"], correct:1, ok:"Richtig! KI-Tools wie ChatGPT halluzinieren – sie erfinden manchmal Antworten die ueberzeugend klingen aber falsch sind. Immer mit anderen Quellen checken!", nope:"Falsch! KI kann sich irren und tut das oefter als man denkt. Dieses Phaenomen heisst Halluzination." },
+  { cat:"Datenschutz", col:"#ef4444", emoji:"🔐", q:"Was passiert mit dem Text den du in ChatGPT eintippst?", opts:["Wird sofort geloescht","Kann gespeichert werden","Nur du siehst es","Ist 100% anonym"], correct:1, ok:"Genau! Viele KI-Apps speichern deine Eingaben – manchmal sogar fuer das Training der KI. Gib niemals echten Namen, Adresse oder Paswoerter ein!", nope:"Leider falsch! Deine Eingaben koennen gespeichert und fuer KI-Training verwendet werden. Vorsicht mit persoenlichen Daten!" },
+  { cat:"Schule & KI", col:"#8b5cf6", emoji:"📚", q:"Dein Freund laesst ChatGPT seinen Aufsatz schreiben und gibt ihn ab. Was denkst du?", opts:["Super Hack!","Riskant und unehrlich","Nur wenn keiner es merkt","Haengt von der Schule ab"], correct:1, ok:"Gut erkannt! Abgesehen davon dass viele Schulen das verbieten – wenn die KI fuer dich lernt, lernst du nichts. Ausserdem koennen Lehrer KI-Texte oft erkennen.", nope:"Das ist tatsaechlich riskant! Schulen verbieten das zunehmend und Lehrer koennen KI-Texte oft erkennen. Und: du lernst dabei nichts." },
+  { cat:"Mythos-Check", col:"#f59e0b", emoji:"🤖", q:"Kann KI wirklich Gefuehle haben?", opts:["Ja, sie lernt Gefuehle","Nein, sie simuliert sie nur","Manche KIs schon","Kommt auf die KI an"], correct:1, ok:"Richtig! KI simuliert Gefuehle durch Sprachmuster – sie hat kein Bewusstsein. Wenn ChatGPT sagt 'Ich freue mich' ist das nur ein erlerntes Sprachmuster.", nope:"Nein – KI hat keine echten Gefuehle. Sie erkennt Sprachmuster und antwortet entsprechend, aber kein Bewusstsein steckt dahinter." },
+  { cat:"Deepfakes", col:"#ec4899", emoji:"🎭", q:"Du siehst ein Video wo dein Lieblingsstar etwas Schockierendes sagt. Was tust du zuerst?", opts:["Sofort weiterleiten!","Quelle pruefen, koennte Deepfake sein","Kommentar schreiben","Dem Star schreiben"], correct:1, ok:"Top! Deepfakes sind KI-generierte Videos die echt aussehen. Immer Quelle checken bevor du etwas glaubst oder weiterschickst. Echte Nachrichtenquellen bestaetigen?", nope:"Stop! Deepfakes sind KI-generierte Videos die taeuschen real wirken. Immer erst pruefen – durch Weiterleiten verbreitet sich Falschinformation." },
+  { cat:"Datenschutz", col:"#ef4444", emoji:"📱", q:"Du erhaeltst eine super personalisierten Werbung – genau das was du dir angeschaut hast. Warum?", opts:["Zufall","KI analysiert dein Verhalten","Die App liest Gedanken","Nur bei Premium-Nutzern"], correct:1, ok:"Genau! KI-Algorithmen tracken dein Verhalten – was du anschaust, wie lange, worauf du klickst. Daraus erstellen sie ein genaues Profil von dir.", nope:"Es ist kein Zufall! KI-Systeme analysieren dein gesamtes Verhalten online und erstellen ein detailliertes Profil." },
+  { cat:"Schule & KI", col:"#8b5cf6", emoji:"🧠", q:"Wie kannst du KI sinnvoll beim Lernen nutzen?", opts:["Aufgaben direkt abschreiben","Erklaerungen holen und selbst loesen","Gar nicht nutzen","Nur bei Mathe"], correct:1, ok:"Super! KI als Erklaer-Tool ist wertvoll: Lass dir Konzepte erklaeren, stelle Folgefragen, lass Beispiele generieren – aber loes die Aufgabe dann selbst!", nope:"KI als Lernhilfe ist wertvoll – aber nicht wenn sie die Arbeit komplett uebernimmt. Lass dir erklaeren und loes dann selbst." },
+  { cat:"Mythos-Check", col:"#f59e0b", emoji:"🌐", q:"KI wird bald alle Jobs wegnehmen – stimmt das?", opts:["Ja, alle Jobs weg","Nein, kein Einfluss","Manche Jobs veraendern sich","Nur in der Industrie"], correct:2, ok:"Gut gedacht! KI veraendert Berufsbilder – manche Jobs fallen weg, neue entstehen. Wer KI bedienen kann hat einen Vorteil. Deshalb ist KI-Kompetenz so wichtig!", nope:"Die Realitaet ist differenzierter: Manche Jobs veraendern sich, neue entstehen. Wer KI sinnvoll einsetzen kann hat klare Vorteile." },
+  { cat:"Datenschutz", col:"#ef4444", emoji:"🔒", q:"Was bedeutet 'End-to-End-Verschluesselung' bei einer App?", opts:["App ist kostenlos","Nur Sender und Empfaenger koennen lesen","Extra schnelle Verbindung","Die App sammelt mehr Daten"], correct:1, ok:"Richtig! End-to-End-Verschluesselung bedeutet: Nur du und dein Gespraeohspartner koennen die Nachrichten lesen – nicht mal die App-Betreiber. WhatsApp und Signal haben das.", nope:"End-to-End-Verschluesselung heisst: Nur Sender und Empfaenger koennen die Nachricht lesen. Das schuetzt deine Privataere." },
+  { cat:"KI-Basics", col:"#10b981", emoji:"⚡", q:"Was ist der groesste Unterschied zwischen KI und einer Google-Suche?", opts:["KI ist schneller","KI generiert Antworten, Google sucht Seiten","KI ist teurer","Kein Unterschied"], correct:1, ok:"Perfekt! Google findet bestehende Webseiten. KI wie ChatGPT generiert neue Texte basierend auf erlernten Mustern – deshalb klingt es immer fluessig, auch wenn es falsch ist!", nope:"Der groesste Unterschied: Google findet bestehende Seiten, KI generiert neue Antworten. Deshalb klingt KI auch bei falschen Antworten ueberzeugend." }
+];
+
+var cur = 0, score = 0, lives = 3, correct = 0, timer = null, timeLeft = 15;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+document.getElementById('btnStart').onclick = function() { startGame(); };
+document.getElementById('btnNext').onclick = function() { nextQ(); };
+document.getElementById('btnRestart').onclick = function() { startGame(); };
+
+function startGame() {
+  cur = 0; score = 0; lives = 3; correct = 0;
+  show('gameScreen');
+  renderQ();
+}
+
+function renderQ() {
+  var q = questions[cur];
+  document.getElementById('roundBadge').textContent = 'Frage ' + (cur+1) + ' / ' + questions.length;
+  var ct = document.getElementById('catTag');
+  ct.textContent = q.cat;
+  ct.style.background = q.col + '22';
+  ct.style.border = '1px solid ' + q.col + '55';
+  ct.style.color = q.col;
+  document.getElementById('qEmoji').textContent = q.emoji;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('scoreDisplay').textContent = score;
+  updateLives();
+
+  var grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  q.opts.forEach(function(o, i) {
+    var d = document.createElement('div');
+    d.className = 'opt';
+    d.textContent = o;
+    d.setAttribute('data-i', i);
+    d.onclick = function() { selectOpt(i); };
+    grid.appendChild(d);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('btnNext').className = 'btn-next';
+  startTimer();
+}
+
+function startTimer() {
+  timeLeft = 15;
+  clearInterval(timer);
+  timer = setInterval(function() {
+    timeLeft -= 0.1;
+    var pct = (timeLeft / 15) * 100;
+    document.getElementById('timerFill').style.width = pct + '%';
+    var fill = document.getElementById('timerFill');
+    if (timeLeft < 5) fill.style.background = 'linear-gradient(90deg, #f87171, #ef4444)';
+    else fill.style.background = 'linear-gradient(90deg, #34d399, #60a5fa)';
+    if (timeLeft <= 0) { clearInterval(timer); timeUp(); }
+  }, 100);
+}
+
+function timeUp() {
+  var q = questions[cur];
+  var opts = document.getElementById('optionsGrid').querySelectorAll('.opt');
+  opts.forEach(function(o, i) {
+    o.classList.add('disabled');
+    o.onclick = null;
+    if (i === q.correct) o.classList.add('reveal');
+  });
+  lives--;
+  updateLives();
+  showFeedback(false, '⏰ Zeit abgelaufen! ' + q.nope, q);
+}
+
+function selectOpt(i) {
+  clearInterval(timer);
+  var q = questions[cur];
+  var opts = document.getElementById('optionsGrid').querySelectorAll('.opt');
+  opts.forEach(function(o, j) {
+    o.classList.add('disabled');
+    o.onclick = null;
+    if (j === q.correct) o.classList.add('correct');
+    if (j === i && i !== q.correct) o.classList.add('wrong');
+  });
+  var isCorrect = i === q.correct;
+  if (isCorrect) {
+    var pts = Math.round(timeLeft * 10);
+    score += pts;
+    correct++;
+    showFeedback(true, q.ok, q);
+  } else {
+    lives--;
+    updateLives();
+    showFeedback(false, q.nope, q);
+  }
+}
+
+function showFeedback(ok, text, q) {
+  var fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (ok ? 'ok' : 'nope');
+  document.getElementById('fbTitle').textContent = ok ? '✅ Richtig! +' + Math.round(timeLeft*10) + ' Punkte' : '❌ Falsch!';
+  document.getElementById('fbText').textContent = text;
+  var btn = document.getElementById('btnNext');
+  btn.className = 'btn-next show';
+  btn.textContent = cur === questions.length - 1 ? 'Ergebnis sehen 🏆' : 'Weiter ➜';
+  if (lives <= 0 && cur < questions.length - 1) {
+    btn.textContent = 'Game Over 💀';
+    btn.onclick = function() { showResult(); };
+  }
+}
+
+function updateLives() {
+  var h = '';
+  for (var i = 0; i < 3; i++) h += i < lives ? '❤️' : '🖤';
+  document.getElementById('livesDisplay').textContent = h;
+}
+
+function nextQ() {
+  if (lives <= 0) { showResult(); return; }
+  cur++;
+  if (cur >= questions.length) { showResult(); return; }
+  renderQ();
+}
+
+function showResult() {
+  clearInterval(timer);
+  show('resultScreen');
+  document.getElementById('resultScore').textContent = score + ' Punkte';
+  var pct = Math.round(correct / questions.length * 100);
+  var emoji, title, desc;
+  if (pct >= 80) {
+    emoji = '🏆'; title = 'KI-Experte!';
+    desc = 'Krass! Du weisst echt viel ueber KI. Du koenntest anderen erklaeren wie das alles funktioniert.';
+  } else if (pct >= 50) {
+    emoji = '💪'; title = 'Solides Wissen!';
+    desc = 'Nicht schlecht! Du kennst die Basics aber es gibt noch ein paar Luecken. Lies die Infos unten durch!';
+  } else {
+    emoji = '📖'; title = 'Noch Luft nach oben!';
+    desc = 'KI ist ein riesiges Thema – kein Stress! Schau dir die Erklaerungen unten an und versuch es nochmal.';
+  }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDesc').textContent = desc;
+  document.getElementById('statsRow').innerHTML =
+    '<div class="stat-box"><div class="stat-num" style="color:#34d399">' + correct + '</div><div class="stat-lbl">Richtig</div></div>' +
+    '<div class="stat-box"><div class="stat-num" style="color:#f87171">' + (questions.length - correct) + '</div><div class="stat-lbl">Falsch</div></div>' +
+    '<div class="stat-box"><div class="stat-num" style="color:#a78bfa">' + score + '</div><div class="stat-lbl">Punkte</div></div>';
+}
+</script>
+</body>
+</html>
